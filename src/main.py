@@ -13,7 +13,7 @@ def main() -> None:
         parser = Parser(tokens)
         root = parser.parse()
         
-        visualize(root, f"ast_{i}")
+        visualize(root, f"../examples/ast_{i}")
 
     for i in range(len(w)):
         tokens = tokenize(w[i])
