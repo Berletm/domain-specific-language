@@ -2,7 +2,7 @@
 \usepackage[russian]{babel}
 \usepackage[T2A]{fontenc}
 \usepackage[utf8]{inputenc}
-\usepackage[left=2cm, right=2cm, top=2cm, bottom=2cm]{geometry}
+\usepackage[left=1.5cm, right=1.5cm, top=2cm, bottom=2cm]{geometry}
 \usepackage{graphicx}
 
 \title{Лабораторная работа №2.\\Построение грамматики для формального языка DSL и реализация синтаксического анализатора.}
@@ -27,6 +27,32 @@
 \section{Описание решения}
     \subsection{Описание языка}
     \subsection{Описание LL1 грамматики}
+        <root> ::= <query> \\
+        <query> ::= <select-operator><columns><source><conditions><sort-operator><limit-operator> \\
+        <select-operator> ::= "выбрать"$|$"достать"$|$"выдать"$|$"взять" \\
+        <columns> ::= <all>|<columns-list> \\
+        <all> ::= "всё"$|$"все" \\
+        <columns-list> ::= <column> <columns-list-tail> \\
+        <column> ::= <существительное> \\ 
+        <columns-list-tail> ::= <comma><column><columns-list-tail>|$\varepsilon$ \\
+        <comma> ::= "\,," \\
+        <source> ::= <from-table><существительное> \\
+        <from-table> ::= <from><table> \\ 
+        <from> ::= "из" \\
+        <table> ::= "таблицы" \\
+        <conditions> ::= <where><condition>|$\varepsilon$ \\
+        <where> ::= "где" \\ 
+        <condition> ::= <expression><condition-tail> \\
+        <condition-tail> ::= <chain><expression>|$\varepsilon$ \\
+        <expression> ::= <существительное><inequality-sings><condition-word> \\
+        <chain> ::= "и"$|$"или" \\
+        <inequality-sings> ::= "$<$"$|$"$>$"$|$"$==$"$|$"$<=$"$|$"$>=$"$|$"$!=$" \\
+        <condition-word> ::= <существительное>$|$<число>|<наречие> \\
+        <sort-operator> ::= <sort><предлог><column><предлог><order>|$\varepsilon$ \\
+        <sort> ::= "сортировать" \\
+        <order> ::= "возрастанию"$|$"убыванию"$|$$\varepsilon$ \\
+        <limit-operator> ::= <limit><целое число>$|$$\varepsilon$ \\
+        <limit> ::= "ограничить"
     \subsection{Описание парсера}
 \pagebreak
 

@@ -1,0 +1,1 @@
+PTH2EXAMPLES = r"../examples"
