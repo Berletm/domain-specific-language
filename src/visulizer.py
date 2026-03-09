@@ -4,7 +4,7 @@ from parser import Node
 
 def visualize(root: Node, pth: str) -> None:
     graph = graphviz.Digraph("AST")
-    graph.attr(rankdir='TB', bgcolor="#e3e5e7", splines='spline', dpi='300')
+    graph.attr(rankdir='TB', bgcolor='transparent', splines='spline', dpi='300')
     graph.node_attr.update(
         shape='box',
         style='filled,rounded',

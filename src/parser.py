@@ -83,7 +83,7 @@ class Parser:
         
         text = " ".join([tok.tok for tok in self.tokens])
         
-        return text + "\n" + " " * (l + self.pos) + "^" + "\n"
+        return text + "\n" + " " * (l + self.pos) + "^"*len(self.tokens[self.pos].tok) + "\n"
     
     def parse(self) -> Node:
         select_node  = self.parse_select()
@@ -235,9 +235,12 @@ class Parser:
     
     def parse_inequality_signs(self) -> Node:
         tok = self.current()
-        
+
         if tok is None:
             raise SyntaxError("\n" + self.print_pos() + f"Unexpected end of token sequence got {tok} token.")
+        elif tok.pos == "COMP":
+            self.eat()
+            return Node(tok, "inequality-signs")
         elif tok.tok not in ["<", ">", "==", "!=", ">=", "<="]:
             raise SyntaxError("\n" + self.print_pos() + f"Expected {["<", ">", "==", "!=", ">=", "<="]} token got {tok} token.")
 
@@ -303,7 +306,7 @@ class Parser:
         
         num_tok = self.current()
         if num_tok is None or num_tok.pos != "NUMR":
-            raise SyntaxError(self.print_pos() + "Ожидалось число после 'ограничить'")
+            raise SyntaxError("\n" + self.print_pos() + f"Expected NUMR got {num_tok.tok} with pos {num_tok.pos}.")
         
         num_node = Node(num_tok, "numr")
         self.eat()

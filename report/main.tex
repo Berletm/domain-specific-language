@@ -4,6 +4,13 @@
 \usepackage[utf8]{inputenc}
 \usepackage[left=1.5cm, right=1.5cm, top=2cm, bottom=2cm]{geometry}
 \usepackage{graphicx}
+\usepackage{indentfirst}
+\usepackage{tcolorbox}
+\usepackage{amsmath}
+\usepackage[colorlinks=true, linkcolor=black, linktoc=all, bookmarks=true, urlcolor=black]{hyperref}
+\usepackage{fontawesome5}
+\tcbuselibrary{most}
+
 
 \title{Лабораторная работа №2.\\Построение грамматики для формального языка DSL и реализация синтаксического анализатора.}
 \author{Берлет Максим гр. 3384}
@@ -21,46 +28,160 @@
 \pagebreak
 
 \section{Постановка задачи}
+\begin{tcolorbox}[title=Условие задания, colframe=blue, fonttitle=\bfseries]
+    Разработать формальную грамматику для предметно-ориентированного языка (DSL) 
+    запросов к базе данных и реализовать синтаксический анализатор, 
+    строящий деревья разбора для корректных выражений.
+\end{tcolorbox}
+
+\begin{tcbitemize}[
+    raster columns=2,         
+    raster equal height=rows,  
+    raster row skip=5mm,      
+    raster column skip=5mm,            
+    colframe=black,             
+    fonttitle=\bfseries
+]
+\tcbitem[title=Входные данные, colframe=blue] 
+    Текстовый файл, содержащий список запросов. \\
+    Запросы могут быть как синтаксически правильными, так и содержать ошибки.
+\tcbitem[title=Выходные данные, colframe=blue] 
+    Для каждого запроса программа должна вывести:
+    \begin{enumerate}
+        \item Исходный запрос
+        \item Результат синтаксического анализа (успех/неудача)
+        \item В случае успеха — дерево разбора в текстовом или графическом виде
+        \item В случае неудачи — диагностику ошибки (на каком токене произошла ошибка)
+    \end{enumerate}
+\end{tcbitemize}
 
 \pagebreak
 
 \section{Описание решения}
     \subsection{Описание языка}
+    По условию нужно придумать LL1 грамматику описывающую язык запросов к БД на русском языке, 
+    по которой можно построить синтаксический анализатор (парсер). 
+    Синтаксически корректные запросы будут обработаны и в ходе парсинга построено дерево разбора.
+    Некорректные запросы не будут распознаны и будет показано, где парсер не смог распознать символ.
+
+    Типичный запрос к БД - это запрос SELECT. Именно его и будем описывать в грамматике. 
+    У оператора SELECT есть возможность выбрать все колонки, либо какие-то конкретные, также можно указать из какой таблицы выбирать,
+    условия для отбора записей. Кроме того, запрос можно сортировать по колонкам и выводить не все записи, а ограниченное их количество.
+
     \subsection{Описание LL1 грамматики}
-        <root> ::= <query> \\
-        <query> ::= <select-operator><columns><source><conditions><sort-operator><limit-operator> \\
-        <select-operator> ::= "выбрать"$|$"достать"$|$"выдать"$|$"взять" \\
-        <columns> ::= <all>|<columns-list> \\
-        <all> ::= "всё"$|$"все" \\
-        <columns-list> ::= <column> <columns-list-tail> \\
-        <column> ::= <существительное> \\ 
-        <columns-list-tail> ::= <comma><column><columns-list-tail>|$\varepsilon$ \\
-        <comma> ::= "\,," \\
-        <source> ::= <from-table><существительное> \\
-        <from-table> ::= <from><table> \\ 
-        <from> ::= "из" \\
-        <table> ::= "таблицы" \\
-        <conditions> ::= <where><condition>|$\varepsilon$ \\
-        <where> ::= "где" \\ 
-        <condition> ::= <expression><condition-tail> \\
-        <condition-tail> ::= <chain><expression>|$\varepsilon$ \\
-        <expression> ::= <существительное><inequality-sings><condition-word> \\
-        <chain> ::= "и"$|$"или" \\
-        <inequality-sings> ::= "$<$"$|$"$>$"$|$"$==$"$|$"$<=$"$|$"$>=$"$|$"$!=$" \\
-        <condition-word> ::= <существительное>$|$<число>|<наречие> \\
-        <sort-operator> ::= <sort><предлог><column><предлог><order>|$\varepsilon$ \\
-        <sort> ::= "сортировать" \\
-        <order> ::= "возрастанию"$|$"убыванию"$|$$\varepsilon$ \\
-        <limit-operator> ::= <limit><целое число>$|$$\varepsilon$ \\
-        <limit> ::= "ограничить"
+    Опишем правила, задающие LL1 грамматику.
+        \begin{tcolorbox}[
+                        width=1.05\textwidth,
+                        left=2mm,              
+                        right=2mm,              
+                        top=2mm,                
+                        bottom=2mm,             
+                        boxsep=1mm]
+            <root> ::= <query> \\
+            <query> ::= <select-operator><columns><source><conditions><sort-operator><limit-operator> \\
+            <select-operator> ::= "выбрать" \ $|$ "достать" \ $|$ "выдать" \ $|$ "взять" \\
+            <columns> ::= <all> | <columns-list> \\
+            <all> ::= "всё" \ $|$ "все" \\
+            <columns-list> ::= <column><columns-list-tail> \\
+            <column> ::= <существительное> \\ 
+            <columns-list-tail> ::= <comma><column><columns-list-tail> | $\varepsilon$ \\
+            <comma> ::= "\,," \\
+            <source> ::= <from-table><существительное> \\
+            <from-table> ::= <from><table> \\ 
+            <from> ::= "из" \\
+            <table> ::= "таблицы" \\
+            <conditions> ::= <where><condition>|$\varepsilon$ \\
+            <where> ::= "где" \\ 
+            <condition> ::= <expression><condition-tail> \\
+            <condition-tail> ::= <chain><expression>|$\varepsilon$ \\
+            <expression> ::= <expression-head><inequality-sings><condition-word> \\
+            <expression-head> ::= <существительное> \ | <имя прилагательное>\\
+            <chain> ::= "и" \ $|$ "или" \\
+            <inequality-sings> ::= "$<$" \ $|$ "$>$" \ $|$ "$==$" \ $|$ "$<=$" \ $|$ "$>=$" \ $|$ "$!=$" $|$ <компаратив>\\
+            <condition-word> ::= <существительное> \ $|$ <число> \ | <наречие> \ | <имя прилагательное> \\
+            <sort-operator> ::= <sort><предлог><column><предлог><order> | $\varepsilon$ \\
+            <sort> ::= "сортировать" \\
+            <order> ::= "возрастанию"$|$"убыванию"$|$$\varepsilon$ \\
+            <limit-operator> ::= <limit><целое число> \ $|$ $\varepsilon$ \\
+            <limit> ::= "ограничить"
+        \end{tcolorbox}
+    \pagebreak
     \subsection{Описание парсера}
-\pagebreak
+    В качестве парсера был реализован классический рекурсивный анализатор, где каждому правилу соответствует функция.
+    Нетерминальные правила проваливаются глубже в другие правила через соответствующие функции, а функции терминальных правил, возвращают 
+    узлы дерева разбора, в которых хранятся символы(токены). Для определения части речей речи слов была использована библиотека \emph{pymorphy3}.
+    
+    Изначально на вход поступает запрос - строка, строка разбивается на слова и пунктуацию(запятые) - это называется токенами, далее класс парсер
+    получает на вход список токенов и начинает синтаксический разбор. Если на каком-то шаге парсер получил токен, который он не ожидал получить, он бросает исключение SyntaxError, 
+    в сообщении которого пишется, что именно и где именно пошло не так. 
+    
+    \subsection{Визуализация}
+    Во время синтаксического разбора происходит построение дерева. При проходе через каждое правило создается новая вершина,
+    которая соединяется ребром с правилом, из которого была вызвана функция. Для визуализации был использован модуль \emph{graphviz} для python.
+    \pagebreak
 
 \section{Демонстрация}
     \subsection{Корректные предложения}
+    В папке \emph{examples} лежит текстовый файл \emph{correct.txt}, в котором записаны примеры корректных запросов.
+
+    \begin{tcbitemize}[raster columns=1, raster row skip=1mm, colframe=blue, fonttitle=\bfseries]
+        \tcbitem[title=Пример 1] выбрать всё из таблицы прокторинга где статус $==$ готово и подозрительность $==$ 1.0
+        \centering
+        \includegraphics[width=17cm]{../examples/ast_0.png}
+
+        \tcbitem[title=Пример 2] выбрать имя, дата\_рождения из таблицы студенты ограничить 3
+        \centering
+        \includegraphics[width=17cm]{../examples/ast_1.png}
+
+        \tcbitem[title=Пример 3] выбрать описание из таблицы подозрительный\_интервал сортировать по длительности по возрастанию
+
+        \centering
+        \includegraphics[width=17cm]{../examples/ast_2.png}
+
+        \tcbitem[title=Пример 4] выбрать всё из таблицы уведомление где номер-записи $!=$ 33
+        \centering
+        \includegraphics[width=17cm]{../examples/ast_3.png}
+
+        \tcbitem[title=Пример 5] выбрать имя, возраст из таблицы студентов где возраст $>$ 18 и город $==$ Москва сортировать по возрасту по убыванию ограничить 10
+
+        \centering
+        \includegraphics[width=17cm]{../examples/ast_4.png}
+
+        \tcbitem[title=Пример 6] выбрать всё из таблицы заказов где сумма больше 5000
+        \centering
+        \includegraphics[width=17cm]{../examples/ast_5.png}
+
+        \tcbitem[title=Пример 7] взять имя, фамилию из таблицы пользователей где активен $==$ да сортировать по фамилии
+        \centering
+        \includegraphics[width=17cm]{../examples/ast_6.png}
+    \end{tcbitemize}
+
     \subsection{Некорректные предложения}
+    В папке \emph{examples} лежит текстовый файл \emph{wrong.txt}, в котором записаны примеры некорректных запросов.
+
+    \begin{tcbitemize}[raster columns=1, raster row skip=1mm, colframe=blue, fonttitle=\bfseries]
+        \tcbitem[title=Пример 1] выбрать имя из таблицы пользователи ограничить много
+        \centering
+        \includegraphics[width=12cm]{../examples/wrong_1.png}
+
+        \tcbitem[title=Пример 2] выбрать имя возраст из таблицы студентов сортировать имя по убыванию
+        \centering
+        \includegraphics[width=12cm]{../examples/wrong_2.png}
+
+        \tcbitem[title=Пример 3] достать название цену из таблицы товаров где цена <= тысяча
+        \centering
+        \includegraphics[width=12cm]{../examples/wrong_3.png}
+    \end{tcbitemize}
 \pagebreak
 
 \section{Выводы}
+    В ходе выполнения лабораторной работы была разработана LL1 грамматика, описывающая запросы к БД на русском языке.
+    По грамматике был реализован синтаксический анализатор(парсер), рекурсивно обрабатывающий строку с запросом. Были построены и визуализированы 
+    деревья синтаксического разбора. В файлах \emph{correct.txt} и \emph{wrong.txt} приведены примеры корректных и некорректных запросов.
 
+    \vspace{1.5\baselineskip}
+
+    \noindent
+    \href{https://github.com/Berletm/domain-specific-language}
+        {\color{black!60}\faGithub\small Исходный код}
 \end{document}
